@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/social_login_buttons.dart';
+import '../widgets/social_buttons.dart';
+import '../widgets/custom_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
                 const Text(
@@ -50,8 +52,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 CustomTextField(
                   hintText: 'Enter your password',
                   controller: _passwordController,
-                  obscureText: true,
-                  suffixIcon: const Icon(Icons.visibility_off),
+                  obscureText: _obscureText,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscureText ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -72,25 +82,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       child: const Text(
                         'Forgot password?',
-                        style: TextStyle(color: Colors.blue),
+                        style: TextStyle(color: Color(0xFF35C2C1)),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Login'),
-                  ),
+                CustomButton(
+                  text: 'Login',
+                  onPressed: _handleLogin,
                 ),
                 const SizedBox(height: 24),
                 const SocialLoginButtons(),

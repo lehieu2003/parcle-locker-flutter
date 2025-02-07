@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/social_login_buttons.dart';
+import '../widgets/social_buttons.dart';
 import '../utils/validators.dart';
+import '../widgets/custom_button.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -76,18 +77,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
+                Center(
+                  child: CustomButton(
+                    text: 'Register',
                     onPressed: _handleRegister,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Register'),
                   ),
                 ),
                 const SizedBox(height: 24),
