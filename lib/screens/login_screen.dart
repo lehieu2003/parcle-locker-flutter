@@ -121,6 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       // Implement login logic
+      Navigator.pushNamed(context, '/home');
     }
   }
 }

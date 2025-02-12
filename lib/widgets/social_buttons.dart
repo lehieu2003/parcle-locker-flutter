@@ -17,11 +17,11 @@ class SocialLoginButtons extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSocialButton('lib/assets/facebook.png', () {}),
+              _buildSocialButton('assets/images/facebook.png', () {}),
               const SizedBox(width: 10),
-              _buildSocialButton('lib/assets/google.png', () {}),
+              _buildSocialButton('assets/images/google.png', () {}),
               const SizedBox(width: 10),
-              _buildSocialButton('lib/assets/apple.png', () {}),
+              _buildSocialButton('assets/images/apple.png', () {}),
             ],
           ),
         ),

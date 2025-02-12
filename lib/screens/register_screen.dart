@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/social_buttons.dart';
 import '../utils/validators.dart';
 import '../widgets/custom_button.dart';
+import '../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -111,7 +113,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleRegister() {
     if (_formKey.currentState!.validate()) {
-      // Implement registration logic
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      authProvider.signUp(
+        _usernameController.text,
+        _emailController.text,
+        _passwordController.text,
+        '', // name
+        '123', // phone
+        '', // address
+        0, // age
+        'customer', // role
+      );
     }
   }
 }
