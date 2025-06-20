@@ -66,10 +66,11 @@ class BottomNavBar extends StatelessWidget {
             elevation: 4,
             child: const Icon(Icons.add, color: Colors.white, size: 32),
             onPressed: () {
-              // Use direct navigation instead of named routes
-              Navigator.of(context).push(
+              // Use MaterialPageRoute with fullscreenDialog set to true
+              Navigator.of(context, rootNavigator: true).push(
                 MaterialPageRoute(
                   builder: (context) => const CreateOrderScreen(),
+                  fullscreenDialog: true,
                 ),
               );
             },

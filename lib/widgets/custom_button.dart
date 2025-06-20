@@ -6,6 +6,7 @@ class CustomButton extends StatelessWidget {
   final Color color;
   final double borderRadius;
   final EdgeInsets padding;
+  final double? width;
 
   const CustomButton({
     super.key,
@@ -14,6 +15,7 @@ class CustomButton extends StatelessWidget {
     this.color = const Color(0xFF1E232C), // Default background color
     this.borderRadius = 12.0,
     this.padding = const EdgeInsets.symmetric(vertical: 16),
+    this.width,
   });
 
   void _handlePress() {
@@ -24,7 +26,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
+      width: width ?? double.infinity,
       child: ElevatedButton(
         onPressed: _handlePress,
         style: ElevatedButton.styleFrom(

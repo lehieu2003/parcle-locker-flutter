@@ -25,7 +25,23 @@ class HomeNavigator extends StatelessWidget {
             break;
           case '/create-order':
             builder = (BuildContext context) => const CreateOrderScreen();
-            break;
+            // Sử dụng PageRouteBuilder cho route create-order để ẩn bottom nav
+            return PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                const CreateOrderScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                const begin = Offset(0.0, 1.0);
+                const end = Offset.zero;
+                const curve = Curves.ease;
+                var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                return SlideTransition(
+                  position: animation.drive(tween),
+                  child: child,
+                );
+              },
+              settings: settings,
+              fullscreenDialog: true,
+            );
           case '/check-order':
             builder = (BuildContext context) => const CheckOrderScreen();
             break;

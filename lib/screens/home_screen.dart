@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parcel_locker_ui/screens/services/create_order_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -234,7 +235,17 @@ class _HomeScreenState extends State<HomeScreen> {
       Color color, String route) {
     return InkWell(
       onTap: () {
-        Navigator.of(context).pushNamed(route);
+        if (route == '/create-order') {
+          // Use MaterialPageRoute with fullscreenDialog set to true
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const CreateOrderScreen(),
+              fullscreenDialog: true,
+            ),
+          );
+        } else {
+          Navigator.of(context).pushNamed(route);
+        }
       },
       child: Column(
         children: [
