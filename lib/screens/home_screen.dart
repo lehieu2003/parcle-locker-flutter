@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Add a FocusNode for the search field
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    // Clean up the focus node when the widget is disposed
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,12 +61,15 @@ class HomeScreen extends StatelessWidget {
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.menu, color: Colors.white),
-                          onPressed: () {},
+                          onPressed: () {
+                            // Open the end drawer
+                            Scaffold.of(context).openEndDrawer();
+                          },
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Search Bar
+                    // Search Bar - updated with focusNode
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
@@ -59,6 +77,7 @@ class HomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: TextField(
+                        focusNode: _searchFocusNode, // Add the focus node
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: 'Search your parcels...',
@@ -68,6 +87,10 @@ class HomeScreen extends StatelessWidget {
                           icon: Icon(Icons.search,
                               color: Colors.white.withAlpha(128)),
                         ),
+                        // When tapped, explicitly request focus to prevent automatic focus
+                        onTap: () {
+                          _searchFocusNode.requestFocus();
+                        },
                       ),
                     ),
                   ],
@@ -140,17 +163,23 @@ class HomeScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildServiceItem(
+                              context,
                               'assets/images/find-locker-icon.png',
                               'Find\nLocker',
-                              Colors.orange),
+                              Colors.orange,
+                              '/find-locker'),
                           _buildServiceItem(
+                              context,
                               'assets/images/create-order-icon.png',
                               'Create\nOrder',
-                              Colors.orange),
+                              Colors.orange,
+                              '/create-order'),
                           _buildServiceItem(
+                              context,
                               'assets/images/check-order-icon.png',
                               'Check\nOrder',
-                              Colors.orange),
+                              Colors.orange,
+                              '/check-order'),
                         ],
                       ),
                     ],
@@ -201,24 +230,30 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildServiceItem(String iconPath, String label, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withAlpha(25),
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildServiceItem(BuildContext context, String iconPath, String label,
+      Color color, String route) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).pushNamed(route);
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withAlpha(25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Image.asset(iconPath, width: 35, height: 35),
           ),
-          child: Image.asset(iconPath, width: 35, height: 35),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 

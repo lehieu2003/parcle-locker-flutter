@@ -1,21 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'providers/auth_provider.dart';
+import 'package:parcel_locker_ui/navigators/main_auth_navigator.dart';
+import 'package:parcel_locker_ui/navigators/main_navigator.dart';
+import 'bloc/auth/auth_bloc.dart';
+import 'providers/auth_provider.dart' as local_auth;
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/forgot_password_screen.dart';
-import 'screens/otp_verification_screen.dart';
-import 'screens/create_new_password_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/inventory_screen.dart';
-import 'screens/notifications_screen.dart';
-import 'screens/profile_screen.dart';
-import 'widgets/bottom_nav_bar.dart';
+import 'utils/navigation_service.dart';
 
-void main() {
+// Tạo GlobalKey để có thể truy cập NavigatorState từ bất kỳ đâu trong ứng dụng
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  // Configure Firebase Auth settings globally
+  FirebaseAuth.instance.setSettings(
+    appVerificationDisabledForTesting: true,
+    forceRecaptchaFlow: false,
+  );
+
+  // Set default language
+  FirebaseAuth.instance.setLanguageCode('en');
+
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => AuthProvider()..loadUserData(),
+    MultiProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthBloc(FirebaseAuth.instance),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => local_auth.AuthProvider()..loadUserData(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -23,48 +43,47 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Parcel Locker App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      initialRoute: '/', // Ensure HomeScreen is the initial route
-      routes: {
-        '/': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/otp-verification': (context) => const OtpVerificationScreen(),
-        '/create-new-password': (context) => const CreateNewPasswordScreen(),
-        '/home': (context) => Scaffold(
-              body: const HomeScreen(),
-              bottomNavigationBar: BottomNavBar(currentRoute: '/home'),
-            ),
-        '/inventory': (context) => Scaffold(
-              body: const InventoryScreen(),
-              bottomNavigationBar: BottomNavBar(currentRoute: '/inventory'),
-            ),
-        '/notifications': (context) => Scaffold(
-              body: const NotificationsScreen(),
-              bottomNavigationBar: BottomNavBar(currentRoute: '/notifications'),
-            ),
-        '/profile': (context) => Scaffold(
-              body: const ProfileScreen(),
-              bottomNavigationBar: BottomNavBar(currentRoute: '/profile'),
-            ),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/') {
-          return MaterialPageRoute(
-            builder: (context) => const LoginScreen(),
-          );
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        debugPrint(
+            'MyApp BlocListener: Auth state changed to ${state.runtimeType}');
+        if (state is AuthAuthenticated) {
+          debugPrint('MyApp: User authenticated, navigating to MainNavigator');
+          NavigationService.navigateToMain();
+        } else if (state is AuthUnauthenticated) {
+          debugPrint('MyApp: User unauthenticated, navigating to LoginScreen');
+          NavigationService.navigateToLogin();
         }
-        return null;
       },
+      child: MaterialApp(
+        title: 'Parcel Locker App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          scaffoldBackgroundColor: Colors.white,
+          // Add these to ensure bottom navigation bar styling
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            backgroundColor: Colors.white,
+            selectedItemColor: Colors.orange,
+            unselectedItemColor: Colors.grey[600],
+          ),
+        ),
+        navigatorKey: navigatorKey, // Sử dụng navigatorKey toàn cục
+        onGenerateRoute: (settings) {
+          // Xử lý điều hướng chuyển trang ở đây nếu cần
+          if (settings.name == '/login') {
+            debugPrint('Main: Generating route for /login');
+            return MaterialPageRoute(builder: (_) => const LoginScreen());
+          } else if (settings.name == '/main') {
+            debugPrint('Main: Generating route for /main');
+            return MaterialPageRoute(builder: (_) => const MainNavigator());
+          }
+          return null;
+        },
+        home: const MainAuth(),
+      ),
     );
   }
 }

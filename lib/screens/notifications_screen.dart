@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/notification_model.dart';
+import '../widgets/empty_notification_state.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -72,33 +73,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         elevation: 0,
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: groupedNotifications.length,
-        itemBuilder: (context, index) {
-          final date = groupedNotifications.keys.elementAt(index);
-          final notificationsForDate = groupedNotifications[date]!;
+      body: notifications.isEmpty
+          ? const EmptyNotificationState()
+          : ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: groupedNotifications.length,
+              itemBuilder: (context, index) {
+                final date = groupedNotifications.keys.elementAt(index);
+                final notificationsForDate = groupedNotifications[date]!;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-              ...notificationsForDate
-                  .map((notification) => _buildNotificationItem(notification)),
-            ],
-          );
-        },
-      ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        date,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                    ...notificationsForDate.map(
+                        (notification) => _buildNotificationItem(notification)),
+                  ],
+                );
+              },
+            ),
     );
   }
 

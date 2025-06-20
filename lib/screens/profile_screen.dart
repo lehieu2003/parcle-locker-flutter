@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../utils/navigation_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -192,11 +195,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: () {
+                // Gửi event đăng xuất đến AuthBloc
+                context.read<AuthBloc>().add(AuthSignOutRequested());
                 Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/',
-                  (route) => false,
-                ); // Navigate to login and clear stack
+
+                // Sử dụng NavigationService để điều hướng đến màn hình đăng nhập
+                NavigationService.navigateToLogin();
               },
               child: const Text(
                 'Logout',

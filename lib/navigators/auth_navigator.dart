@@ -10,30 +10,35 @@ class AuthNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateRoute: (RouteSettings settings) {
-        WidgetBuilder builder;
-        switch (settings.name) {
-          case '/login':
-            builder = (BuildContext _) => const LoginScreen();
-            break;
-          case '/register':
-            builder = (BuildContext _) => const RegisterScreen();
-            break;
-          case '/forgot-password':
-            builder = (BuildContext _) => const ForgotPasswordScreen();
-            break;
-          case '/otp-verification':
-            builder = (BuildContext _) => const OtpVerificationScreen();
-            break;
-          case '/create-new-password':
-            builder = (BuildContext _) => const CreateNewPasswordScreen();
-            break;
-          default:
-            throw Exception('Invalid route: ${settings.name}');
-        }
-        return MaterialPageRoute(builder: builder, settings: settings);
-      },
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Navigator(
+        initialRoute: '/login',
+        onGenerateRoute: (RouteSettings settings) {
+          WidgetBuilder builder;
+          switch (settings.name) {
+            case '/login':
+              builder = (BuildContext context) => const LoginScreen();
+              break;
+            case '/register':
+              builder = (BuildContext context) => const RegisterScreen();
+              break;
+            case '/forgot-password':
+              builder = (BuildContext context) => const ForgotPasswordScreen();
+              break;
+            case '/otp-verification':
+              builder = (BuildContext context) => const OtpVerificationScreen();
+              break;
+            case '/create-new-password':
+              builder =
+                  (BuildContext context) => const CreateNewPasswordScreen();
+              break;
+            default:
+              builder = (BuildContext context) => const LoginScreen();
+          }
+          return MaterialPageRoute(builder: builder, settings: settings);
+        },
+      ),
     );
   }
 }
