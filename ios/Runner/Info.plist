@@ -43,11 +43,12 @@
 	</array>	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
+	<true/>	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to location to find nearby lockers.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location to find nearby lockers.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera permission is required for QR code scanning.</string>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
 </dict>

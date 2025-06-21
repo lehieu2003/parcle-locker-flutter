@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:parcel_locker_ui/screens/services/check_order_screen.dart';
 import 'package:parcel_locker_ui/screens/services/create_order_screen.dart';
+import 'package:parcel_locker_ui/screens/services/find_locker_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -237,14 +239,30 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         if (route == '/create-order') {
           // Use MaterialPageRoute with fullscreenDialog set to true
-          Navigator.of(context).push(
+          Navigator.of(context, rootNavigator: true).push(
             MaterialPageRoute(
               builder: (context) => const CreateOrderScreen(),
               fullscreenDialog: true,
             ),
           );
-        } else {
-          Navigator.of(context).pushNamed(route);
+        } else if (route == '/find-locker') {
+          // Navigate to Find Locker screen using MaterialPageRoute
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  const FindLockerScreen(), // Replace with your FindLockerScreen widget
+              fullscreenDialog: true,
+            ),
+          );
+        } else if (route == '/check-order') {
+          // Navigate to Check Order screen using MaterialPageRoute
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  const CheckOrderScreen(), // Replace with your CheckOrderScreen widget
+              fullscreenDialog: true,
+            ),
+          );
         }
       },
       child: Column(
