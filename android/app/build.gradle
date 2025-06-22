@@ -8,8 +8,7 @@ plugins {
 android {
     namespace = "com.example.parcel_locker_ui"
     compileSdk = 35
-//    ndkVersion = flutter.ndkVersion
-    ndkVersion "25.1.8937393"
+    ndkVersion = flutter.ndkVersion
 
 
     compileOptions {

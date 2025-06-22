@@ -41,23 +41,6 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Premium User',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -181,6 +164,7 @@ class AppDrawer extends StatelessWidget {
                 // Gửi event AuthSignOutRequested để đăng xuất
                 authBloc.add(AuthSignOutRequested());
                 Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(); // Close drawer
 
                 // Sử dụng NavigationService để điều hướng đến màn hình đăng nhập
                 NavigationService.navigateToLogin();

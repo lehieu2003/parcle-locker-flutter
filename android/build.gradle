@@ -1,16 +1,21 @@
 buildscript {
-    ext.kotlin_version = '1.9.20'
+    ext.kotlin_version = '1.9.0' // Đề xuất dùng phiên bản Kotlin mới hơn cho compileSdk 35
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
+        // Cập nhật phiên bản Android Gradle Plugin (AGP)
+        // compileSdk 35 yêu cầu AGP ít nhất là 8.3.0 hoặc 8.4.0
+        // (Kiểm tra lại docs chính thức của Google/Flutter để có phiên bản AGP tương thích nhất với Flutter 3.32.4 và compileSdk 35)
+        classpath 'com.android.tools.build:gradle:8.4.0' // Hoặc 8.3.0 nếu 8.4.0 gây vấn đề
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.android.tools.build:gradle:8.1.1" // Updated AGP version
+        // Plugin cho Google Services (Firebase)
+        classpath 'com.google.gms:google-services:4.4.2' // Cập nhật phiên bản mới nhất
     }
 }
 
-allprojects {
+allprojects {   
     repositories {
         google()
         mavenCentral()

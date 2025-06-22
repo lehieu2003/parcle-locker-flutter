@@ -21,22 +21,44 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // Initial check
     add(AuthCheckRequested());
   }
-
   void _onAuthCheckRequested(
       AuthCheckRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
       await Future.delayed(
           const Duration(seconds: 1)); // Simulate network delay
+
       final User? currentUser = _firebaseAuth.currentUser;
       if (currentUser != null) {
-        emit(AuthAuthenticated(user: currentUser));
+        try {
+          // Reload user to ensure we have fresh data
+          await currentUser.reload();
+          final refreshedUser = _firebaseAuth.currentUser;
+
+          if (refreshedUser != null) {
+            emit(AuthAuthenticated(user: refreshedUser));
+          } else {
+            emit(AuthUnauthenticated());
+          }
+        } catch (reloadError) {
+          debugPrint('Error reloading user: $reloadError');
+          // If reload fails but we have a user, still consider authenticated
+          emit(AuthAuthenticated(user: currentUser));
+        }
       } else {
         emit(AuthUnauthenticated());
       }
     } catch (e) {
       debugPrint('Auth check error: $e');
-      emit(AuthUnauthenticated());
+      // Handle the specific PigeonUserDetails casting error
+      if (e.toString().contains('PigeonUserDetails') ||
+          e.toString().contains('type cast')) {
+        debugPrint(
+            'PigeonUserDetails casting error detected, treating as unauthenticated');
+        emit(AuthUnauthenticated());
+      } else {
+        emit(AuthUnauthenticated());
+      }
     }
   }
 
@@ -45,33 +67,65 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     debugPrint('AuthBloc: Processing SignInRequested for ${event.email}');
     emit(AuthLoading());
     try {
-      // Disable reCAPTCHA verification for testing and configure settings
+      // Clear any existing auth state
+      await _firebaseAuth.signOut();
+
+      // Configure Firebase Auth settings
       await _firebaseAuth.setSettings(
         appVerificationDisabledForTesting: true,
         forceRecaptchaFlow: false,
       );
 
       // Set language code to prevent null locale issues
-      _firebaseAuth.setLanguageCode('en');
+      await _firebaseAuth.setLanguageCode('en');
 
       debugPrint('AuthBloc: Attempting Firebase sign in for ${event.email}');
-      UserCredential userCredential =
-          await _firebaseAuth.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
-      );
 
-      if (userCredential.user != null) {
+      // Add retry mechanism for authentication
+      UserCredential? userCredential;
+      int retryCount = 0;
+      const maxRetries = 3;
+
+      while (retryCount < maxRetries && userCredential == null) {
         try {
-          // Save user info to shared preferences
-          await _saveUserData(userCredential.user!);
-          debugPrint(
-              'AuthBloc: Login successful, emitting AuthAuthenticated for ${userCredential.user!.email}');
-          emit(AuthAuthenticated(user: userCredential.user!));
-        } catch (saveError) {
-          debugPrint('Error saving user data: $saveError');
-          // Still emit authenticated since login was successful
-          emit(AuthAuthenticated(user: userCredential.user!));
+          userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+            email: event.email.trim(),
+            password: event.password,
+          );
+          break;
+        } catch (e) {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            rethrow;
+          }
+          debugPrint('Auth attempt $retryCount failed, retrying...');
+          await Future.delayed(Duration(milliseconds: 500 * retryCount));
+        }
+      }
+
+      if (userCredential?.user != null) {
+        final user = userCredential!.user!;
+
+        // Ensure user is properly loaded
+        await user.reload();
+        final currentUser = _firebaseAuth.currentUser;
+
+        if (currentUser != null) {
+          try {
+            // Save user info to shared preferences
+            await _saveUserData(currentUser);
+            debugPrint(
+                'AuthBloc: Login successful, emitting AuthAuthenticated for ${currentUser.email}');
+            emit(AuthAuthenticated(user: currentUser));
+          } catch (saveError) {
+            debugPrint('Error saving user data: $saveError');
+            // Still emit authenticated since login was successful
+            emit(AuthAuthenticated(user: currentUser));
+          }
+        } else {
+          debugPrint('AuthBloc: Current user is null after successful login');
+          emit(const AuthError(
+              message: 'Authentication failed. Please try again.'));
         }
       } else {
         debugPrint('AuthBloc: Login failed, userCredential.user is null');
@@ -79,22 +133,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('Firebase Auth Exception: ${e.code} - ${e.message}');
-      String errorMessage = 'An error occurred during login';
-
-      if (e.code == 'user-not-found') {
-        errorMessage = 'No user found with this email.';
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Wrong password provided.';
-      } else if (e.code == 'invalid-email') {
-        errorMessage = 'Invalid email format.';
-      } else if (e.code == 'user-disabled') {
-        errorMessage = 'This account has been disabled.';
-      }
-
+      String errorMessage = _getFirebaseAuthErrorMessage(e.code);
       emit(AuthError(message: errorMessage));
     } catch (e) {
       debugPrint('Login error: ${e.toString()}');
-      emit(AuthError(message: 'Login error: ${e.toString()}'));
+      // Handle the specific PigeonUserDetails casting error
+      if (e.toString().contains('PigeonUserDetails') ||
+          e.toString().contains('type cast')) {
+        emit(const AuthError(
+            message: 'Authentication service error. Please try again.'));
+      } else {
+        emit(AuthError(message: 'Login error: ${e.toString()}'));
+      }
     }
   }
 
@@ -133,30 +183,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthSignUpRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      // Disable reCAPTCHA verification for testing and configure settings
+      // Configure Firebase Auth settings
       await _firebaseAuth.setSettings(
         appVerificationDisabledForTesting: true,
         forceRecaptchaFlow: false,
       );
 
       // Set language code to prevent null locale issues
-      _firebaseAuth.setLanguageCode('en');
+      await _firebaseAuth.setLanguageCode('en');
 
       UserCredential userCredential =
           await _firebaseAuth.createUserWithEmailAndPassword(
-        email: event.email,
+        email: event.email.trim(),
         password: event.password,
       );
 
       if (userCredential.user != null) {
-        try {
-          // Save user info to shared preferences
-          await _saveUserData(userCredential.user!);
-          emit(AuthAuthenticated(user: userCredential.user!));
-        } catch (saveError) {
-          debugPrint('Error saving user data during signup: $saveError');
-          // Still emit authenticated since signup was successful
-          emit(AuthAuthenticated(user: userCredential.user!));
+        final user = userCredential.user!;
+
+        // Ensure user is properly loaded
+        await user.reload();
+        final currentUser = _firebaseAuth.currentUser;
+
+        if (currentUser != null) {
+          try {
+            // Save user info to shared preferences
+            await _saveUserData(currentUser);
+            emit(AuthAuthenticated(user: currentUser));
+          } catch (saveError) {
+            debugPrint('Error saving user data during signup: $saveError');
+            // Still emit authenticated since signup was successful
+            emit(AuthAuthenticated(user: currentUser));
+          }
+        } else {
+          emit(const AuthError(
+              message: 'Registration failed. Please try again.'));
         }
       } else {
         emit(
@@ -164,20 +225,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('Firebase Auth Exception: ${e.code} - ${e.message}');
-      String errorMessage = 'An error occurred during registration';
-
-      if (e.code == 'email-already-in-use') {
-        errorMessage = 'An account already exists with this email.';
-      } else if (e.code == 'weak-password') {
-        errorMessage = 'The password is too weak.';
-      } else if (e.code == 'invalid-email') {
-        errorMessage = 'Invalid email format.';
-      }
-
+      String errorMessage = _getFirebaseAuthErrorMessage(e.code);
       emit(AuthError(message: errorMessage));
     } catch (e) {
       debugPrint('Registration error: ${e.toString()}');
-      emit(AuthError(message: 'Registration error: ${e.toString()}'));
+      // Handle the specific PigeonUserDetails casting error
+      if (e.toString().contains('PigeonUserDetails') ||
+          e.toString().contains('type cast')) {
+        emit(const AuthError(
+            message: 'Authentication service error. Please try again.'));
+      } else {
+        emit(AuthError(message: 'Registration error: ${e.toString()}'));
+      }
     }
   }
 
@@ -195,6 +254,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       debugPrint('Error saving user data: $e');
       // Handle the error but don't rethrow to prevent app crash
+    }
+  }
+
+  String _getFirebaseAuthErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'user-not-found':
+        return 'No user found with this email.';
+      case 'wrong-password':
+        return 'Wrong password provided.';
+      case 'invalid-email':
+        return 'Invalid email format.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email.';
+      case 'weak-password':
+        return 'The password is too weak.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection.';
+      default:
+        return 'An error occurred during authentication.';
     }
   }
 }

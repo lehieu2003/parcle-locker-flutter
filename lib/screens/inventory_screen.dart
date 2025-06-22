@@ -19,6 +19,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
     'Cancelled'
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   final List<OrderModel> _orders = [
     OrderModel(
       id: '1',
@@ -56,12 +70,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
       status: OrderStatus.delivered,
     ),
   ];
-
   List<OrderModel> get filteredOrders {
     return _orders.where((order) {
-      if (_selectedFilter == 'All') return true;
-      return order.status.toString().split('.').last.toLowerCase() ==
-          _selectedFilter.replaceAll(' ', '').toLowerCase();
+      // Filter by status
+      bool statusMatch = true;
+      if (_selectedFilter != 'All') {
+        statusMatch = order.status.toString().split('.').last.toLowerCase() ==
+            _selectedFilter.replaceAll(' ', '').toLowerCase();
+      }
+
+      // Filter by search text
+      bool searchMatch = true;
+      if (_searchController.text.isNotEmpty) {
+        final searchText = _searchController.text.toLowerCase();
+        searchMatch = order.merchantName.toLowerCase().contains(searchText) ||
+            order.address.toLowerCase().contains(searchText) ||
+            order.id.toLowerCase().contains(searchText);
+      }
+
+      return statusMatch && searchMatch;
     }).toList();
   }
 
@@ -83,8 +110,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search',
+                hintText: 'Search by merchant, address, or order ID',
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
